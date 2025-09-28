@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "sadeghsalehi",
+    "password": "",
+    "database": "vtracker",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "sadeghsalehi",
+    "password": "",
+    "database": "vtracker",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "sadeghsalehi",
+    "password": "",
+    "database": "vtracker",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}

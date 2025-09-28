@@ -89,10 +89,12 @@ export class AppController {
   return userWithoutPassword;
   }
 
-  @UseGuards(LocalAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('auth/logout')
-  async logout(@Request() req) {
-    return req.logout();
+  async logout(@Request() req, @Res({ passthrough: true }) res: Response) {
+    // Clear the access_token cookie
+    res.clearCookie('access_token');
+    return { message: 'Logout successful' };
   }
 
   @Post('auth/register')

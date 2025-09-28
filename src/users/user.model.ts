@@ -17,4 +17,7 @@ export class User extends Model<User> {
 
   @Column({ type: DataType.STRING, allowNull: true })
   declare verificationToken: string | null;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  declare onboarding: boolean;
 }

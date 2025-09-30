@@ -7,7 +7,11 @@ export class Statistic extends Model<Statistic> {
     declare id: number;
 
     @ForeignKey(() => Question)
-    @Column({ type: DataType.INTEGER, allowNull: false })
+    @Column({ 
+        type: DataType.INTEGER, 
+        allowNull: false,
+        field: 'questionId' // Explicitly specify the database column name
+    })
     declare questionId: number;
 
     @Column({ type: DataType.JSONB, allowNull: true, defaultValue: {} })

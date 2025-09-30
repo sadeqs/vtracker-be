@@ -1,13 +1,19 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
 import { UserRepository } from './user.repository';
 import { randomBytes } from 'crypto';
+import { User as UserModel} from './user.model';
 
 // This should be a real class/interface representing a user entity
 export type User = any;
 
 @Injectable()
 export class UsersService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(
+    private userRepository: UserRepository,
+    @InjectModel(UserModel)
+    private userModel: typeof UserModel
+  ) {}
 
   async findOne(email: string): Promise<User | null> {
     const currentUser = await this.userRepository.findByEmail(email);
@@ -28,5 +34,14 @@ export class UsersService {
 
   async verifyEmail(verificationToken: string): Promise<User | null> {
     return this.userRepository.verifyUser(verificationToken);
+  }
+
+  async findActiveUserIds(): Promise<number[]> {
+    const activeUsers = await this.userModel.findAll({
+      // TODO: update to who have active subscriptions
+      where: { isVerified: true },
+      attributes: ['id']
+    });
+    return activeUsers.map(user => user.id);
   }
 }

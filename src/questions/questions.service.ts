@@ -6,6 +6,7 @@ import { GeminiService } from 'src/gemini.service';
 import { Brand } from '../brand/brand.model';
 import { Statistic } from '../statistics/statistic.model';
 import { StatisticsService } from '../statistics/statistics.service';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class QuestionsService {
@@ -16,6 +17,18 @@ export class QuestionsService {
         private geminiService: GeminiService,
         private statisticsService: StatisticsService
     ) { }
+
+    async listActiveQuestionsIds(userId: number): Promise<number[]> {
+        const questions = await this.questionModel.findAll({
+            where: { 
+                userId,
+                brandId: { [Op.ne]: null }
+            } as any,
+            order: [['id', 'DESC']],
+            include: [Brand],
+        });
+        return questions.map(question => question.id);
+    }
 
     async listQuestions(userId: number, includeStatistics: boolean = false) {
         const questions = await this.questionModel.findAll({
@@ -60,6 +73,31 @@ export class QuestionsService {
             geminiAnswer,
             brandId
         } as any);
+
+        // Run positioning analysis in background (don't await)
+        this.performPositioningAnalysis(question.id, answer, geminiAnswer, brandId);
+
+        // Return question immediately without waiting for analysis
+        return question;
+    }
+
+    async updateQuestionStatistics(questionId: number) {
+        // Find the question
+        const question = await this.questionModel.findByPk(questionId);
+        if(!question) {
+            throw new NotFoundException(`Question with ID ${questionId} not found`);
+        }
+        const { text, brandId } = question;
+        // Get answers from both AI services
+        const [answer, geminiAnswer] = await Promise.all([
+            this.openaiService.answerQuestion(text),
+            this.geminiService.answerQuestion(text)
+        ]);
+
+        // Update the question
+        question.setDataValue('answer', answer);
+        question.setDataValue('geminiAnswer', geminiAnswer);
+        await question.save();
 
         // Run positioning analysis in background (don't await)
         this.performPositioningAnalysis(question.id, answer, geminiAnswer, brandId);

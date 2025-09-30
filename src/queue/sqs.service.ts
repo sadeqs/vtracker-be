@@ -8,6 +8,8 @@ import {
   CreateQueueCommand,
   GetQueueUrlCommand 
 } from '@aws-sdk/client-sqs';
+import { UsersService } from '../users/users.service';
+import { QuestionsService } from 'src/questions/questions.service';
 
 export interface QueueMessage {
   type: 'UPDATE_STATISTICS' | 'CLEANUP' | 'ANALYTICS';
@@ -21,7 +23,11 @@ export class SqsService {
   private readonly sqsClient: SQSClient;
   private readonly queueUrl: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private usersService: UsersService,
+    private questionsService: QuestionsService,
+  ) {
     const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
     const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
     
@@ -92,13 +98,21 @@ export class SqsService {
   }
 
   async triggerUpdateStatistics(data?: any): Promise<void> {
-    const message: QueueMessage = {
-      type: 'UPDATE_STATISTICS',
-      data,
-      timestamp: new Date().toISOString(),
-    };
-
-    await this.sendMessage(message);
+    const userIds = await this.usersService.findActiveUserIds();
+    userIds.forEach(
+        async id => {
+            const questionIds = await this.questionsService.listActiveQuestionsIds(id);
+            const message: QueueMessage = {
+                type: 'UPDATE_STATISTICS',
+                data: {
+                    ...data,
+                    questionIds
+                },
+                timestamp: new Date().toISOString(),
+            };
+            await this.sendMessage(message);
+        }
+    );
     this.logger.log('Update statistics job triggered');
   }
 

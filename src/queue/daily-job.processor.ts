@@ -1,13 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { SqsService, QueueMessage } from './sqs.service';
+import { QuestionsService } from '../questions/questions.service';
 
 @Injectable()
 export class DailyJobProcessor {
   private readonly logger = new Logger(DailyJobProcessor.name);
   private isProcessing = false;
-
-  constructor(private readonly sqsService: SqsService) {}
+  constructor(
+    private readonly sqsService: SqsService,
+    private readonly questionsService: QuestionsService,
+  ) {}
 
   // Schedule daily statistics update at 2:00 AM every day
   @Cron('0 2 * * *', {
@@ -22,8 +25,8 @@ export class DailyJobProcessor {
     });
   }
 
-  // Schedule cleanup at 3:00 AM every day
-  @Cron('0 3 * * *', {
+  // Schedule cleanup at 6:00 AM every day
+  @Cron('0 6 * * *', {
     name: 'daily-cleanup',
     timeZone: 'UTC',
   })
@@ -35,8 +38,8 @@ export class DailyJobProcessor {
     });
   }
 
-  // Schedule analytics at 4:00 AM every day
-  @Cron('0 4 * * *', {
+  // Schedule analytics at 10:00 AM every day
+  @Cron('0 10 * * *', {
     name: 'daily-analytics',
     timeZone: 'UTC',
   })
@@ -106,15 +109,12 @@ export class DailyJobProcessor {
   }
 
   private async handleUpdateStatistics(message: QueueMessage): Promise<void> {
-    this.logger.log('Starting update statistics job');
-    
-    // TODO: Implement statistics update logic
-    // Example tasks:
-    // - Update user activity statistics
-    // - Calculate brand performance metrics
-    // - Update question answer statistics
-    // - Generate daily reports
-    
+    const questionIds = message.data.questionIds;
+    this.logger.log('Starting update statistics job', questionIds);
+    for (const id of questionIds) {
+      await this.questionsService.updateQuestionStatistics(id);
+    }
+
     this.logger.log('Update statistics job completed');
   }
 

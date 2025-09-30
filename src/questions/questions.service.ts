@@ -86,12 +86,12 @@ export class QuestionsService {
             }
 
             const [chatgptPositioning, geminiPositioning] = await Promise.allSettled([
-                this.geminiService.getPositioning(answer, brandName)
+                this.openaiService.getPositioning(answer, brandName)
                     .catch(error => {
                         console.error('Error analyzing ChatGPT text:', error);
                         return {};
                     }),
-                this.geminiService.getPositioning(geminiAnswer, brandName)
+                this.openaiService.getPositioning(geminiAnswer, brandName)
                     .catch(error => {
                         console.error('Error analyzing Gemini text:', error);
                         return {};

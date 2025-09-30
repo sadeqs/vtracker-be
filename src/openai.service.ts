@@ -25,8 +25,7 @@ For every user request, output _only_ a JSON array of strings.
 Each string must be one question.
 Responses should be related to the product/brand, industry of brand and location or a wider location.
 Questions should be indirect queries for assessing brand presence in LLMs.
-There should beone qustion that lists main players.
-also include at least 10 main competitors in the industry at the end seperated by comma.
+also include at least 10 main competitors in the industry at the end separated by comma.
 Do not wrap in markdown.
 Do not add any extra text.
       `.trim(),
@@ -39,7 +38,19 @@ Do not add any extra text.
       n: 1,
     });
     const qs = response.choices.map((choice) => choice.message.content);
-    return qs;
+    
+    // Parse the JSON string to convert it to an array
+    try {
+      if (qs[0]) {
+        const parsedQuestions = JSON.parse(qs[0]);
+        return parsedQuestions;
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to parse questions JSON:', error);
+      // Fallback: return the raw string as a single-item array
+      return qs[0] ? [qs[0]] : [];
+    }
   }
 
   async answerQuestion(question: string): Promise<string> {
@@ -60,7 +71,7 @@ Do not add any extra text.
     return response.choices.map((choice) => choice.message.content).join('\n');
   }
 
-  async aswerQuestions(questions: string[]): Promise<string[]> {
+  async answerQuestions(questions: string[]): Promise<string[]> {
     const responses: string[] = [];
     for (const question of questions) {
       const response = await this.client.chat.completions.create({
@@ -122,5 +133,88 @@ For every user request, output _only_ a JSON array of str containing two fields,
       n: 1,
     });
     return response.choices.map((choice) => choice.message.content);
+  }
+  async getPositioning(text: string, brandName: string): Promise<any> {
+    try {
+      const prompt = `
+        Analyze the following text for brand positioning:
+        
+        "${text}"
+        ` + 
+        // `Focus specifically on brand "${brandName}" and other brands mentioned.` +
+        
+        
+        `Return ONLY a JSON object with NO explanations, markdown formatting, backticks, or code blocks.
+        The raw JSON structure must be:
+        {
+            "positioning": {
+                "brandName1": positioningScore,
+                "brandName2": positioningScore
+            },
+            "repetition": numberOfTimesMainBrandIsRepeated,
+            "density": {
+                "brandName1": densityPercentage,
+                "brandName2": densityPercentage
+            }
+        }
+        
+        Where:
+        - positioningScore is a number from 1-5 (1=highest, 5=lowest). Use all numbers from 1 to 5.
+        - repetition counts how many times "${brandName}" appears
+        - density shows the desnsity of mentions for each product or brand compared to total mentions. sum should be 100%.
+        
+        ONLY return the JSON with NO other text or formatting.
+      `;
+
+      const response = await this.client.chat.completions.create({
+        model: GPT4.model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a brand analysis expert. Return only valid JSON without any markdown formatting or explanations.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        n: 1,
+      });
+
+      const result = response.choices[0]?.message?.content?.trim();
+      
+      if (!result) {
+        throw new Error('No response from OpenAI');
+      }
+
+      let jsonText = result;
+
+      // Extract JSON if it's wrapped in code blocks
+      const jsonRegex = /```(?:json)?([\s\S]*?)```|(\{[\s\S]*\})/;
+      const match = jsonText.match(jsonRegex);
+      if (match) {
+        jsonText = (match[1] || match[2]).trim();
+      }
+
+      try {
+        const parsedJson = JSON.parse(jsonText);
+        return parsedJson;
+      } catch (e) {
+        console.error('Failed to parse JSON. Raw response:', jsonText);
+        console.error('Parse error:', e.message);
+        return {
+          positioning: {},
+          repetition: 0,
+          density: {}
+        };
+      }
+    } catch (error) {
+      console.error('Error calling OpenAI API:', error);
+      return {
+        positioning: {},
+        repetition: 0,
+        density: {}
+      };
+    }
   }
 }

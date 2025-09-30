@@ -54,7 +54,7 @@ export class AppController {
       brand,
       location,
     );
-    const answers = await this.openaiService.aswerQuestions(questions);
+    const answers = await this.openaiService.answerQuestions(questions);
     const summaryResponse = await this.openaiService.summariseAnswers(answers);
     const improvementSuggestions =
       await this.openaiService.getImprovementSuggestions(brand);

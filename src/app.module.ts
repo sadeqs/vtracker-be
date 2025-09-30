@@ -9,6 +9,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { QuestionsModule } from './questions/questions.module';
 import { BrandModule } from './brand/brand.module';
 import { EmailModule } from './email/email.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { EmailModule } from './email/email.module';
     QuestionsModule,
     BrandModule,
     EmailModule,
+    QueueModule,
   ],
   controllers: [AppController],
   providers: [AppService, OpenaiService],

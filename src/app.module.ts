@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppService } from './app.service';
 import { OpenaiService } from './openai.service';
 import { AppController } from './app.controller';
@@ -16,15 +16,19 @@ import { QueueModule } from './queue/queue.module';
     ConfigModule.forRoot(),
     AuthModule,
     UsersModule,
-    SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: '127.0.0.1',
-      port: 5432,
-      username: 'sadeghsalehi',
-      password: '',
-      database: 'vtracker',
-      autoLoadModels: true,
-      synchronize: true,
+    SequelizeModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        dialect: 'postgres',
+        host: configService.get('DB_HOST', '127.0.0.1'),
+        port: parseInt(configService.get('DB_PORT', '5432')),
+        username: configService.get('DB_USERNAME'),
+        password: configService.get('DB_PASSWORD', ''),
+        database: configService.get('DB_NAME'),
+        autoLoadModels: true,
+        synchronize: configService.get('NODE_ENV') !== 'production',
+      }),
+      inject: [ConfigService],
     }),
     QuestionsModule,
     BrandModule,

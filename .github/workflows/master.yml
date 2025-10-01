@@ -3,7 +3,7 @@ name: Deploy NestJS to Elastic Beanstalk
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-and-deploy:
@@ -30,6 +30,16 @@ jobs:
       - name: Build project
         run: pnpm build
       
+      - name: Run database migrations
+        run: pnpm run db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+      
       - name: Create deployment package
         run: |
           zip -r deploy.zip dist node_modules package.json pnpm-lock.yaml Procfile
@@ -44,3 +54,4 @@ jobs:
           version_label: ${{ github.sha }}
           region: ap-southeast-2
           deployment_package: deploy.zip
+          use_existing_version_if_available: true

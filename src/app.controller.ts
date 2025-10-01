@@ -128,4 +128,9 @@ export class AppController {
       email: user.email 
     };
   }
+
+  @Get('/health')
+  healthCheck() {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  }
 }

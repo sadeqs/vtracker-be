@@ -1,1 +1,1 @@
-web: npm install -g pnpm && pnpm run start:prod
+web: npm install -g pnpm --no-global && npx pnpm run start:prod

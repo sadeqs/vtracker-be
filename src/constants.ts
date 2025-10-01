@@ -1,5 +1,5 @@
 export const GPT4 = {
-  model: 'gpt-4.1',
+  model: 'gpt-4o-mini',
 };
 
 export const GEMINI = {

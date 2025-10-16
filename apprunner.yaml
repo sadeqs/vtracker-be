@@ -1,0 +1,27 @@
+version: 1.0
+
+runtime: nodejs24
+
+build:
+  commands:
+    - npm install -g pnpm
+    - pnpm install --prod
+    - pnpm run build
+
+run:
+  command: pnpm run start:prod
+
+# Optional: Add environment variables here or set them in the App Runner console
+# env:
+#   - name: NODE_ENV
+#     value: production
+#   - name: DB_HOST
+#     value: <your-db-host>
+#   - name: DB_PORT
+#     value: 5432
+#   - name: DB_USERNAME
+#     value: <your-db-username>
+#   - name: DB_PASSWORD
+#     value: <your-db-password>
+#   - name: DB_NAME
+#     value: <your-db-name>

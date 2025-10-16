@@ -27,6 +27,14 @@ import { QueueModule } from './queue/queue.module';
         database: configService.get('DB_NAME'),
         autoLoadModels: true,
         synchronize: configService.get('NODE_ENV') !== 'production',
+        ...(configService.get('NODE_ENV') === 'production' && {
+          dialectOptions: {
+            ssl: {
+              require: true,
+              rejectUnauthorized: false, // This is important for RDS connections
+            },
+          },
+        }),
       }),
       inject: [ConfigService],
     }),
